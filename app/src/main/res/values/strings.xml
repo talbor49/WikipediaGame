@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">WikipediaGame</string>
+    <string name="you_win">You win! great job! it only took you</string>
+</resources>
