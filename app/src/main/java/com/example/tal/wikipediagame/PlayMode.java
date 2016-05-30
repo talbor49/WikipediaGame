@@ -2,6 +2,8 @@ package com.example.tal.wikipediagame;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -13,7 +15,7 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class PlayMode extends Activity {
+public class PlayMode extends AppCompatActivity {
 
     private Article destinationArticle;
     private WebView wikipediaWv;
@@ -30,9 +32,14 @@ public class PlayMode extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        destinationArticle  = new Article();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play_mode);
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolbar);
+
+
+        destinationArticle  = new Article();
+
         wikipediaWv = (WebView) findViewById(R.id.wikipediaWebView);
         assert wikipediaWv != null;
         WebSettings webSettings = wikipediaWv.getSettings();
@@ -72,13 +79,13 @@ public class PlayMode extends Activity {
         playAgainButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startNewGame();
+                startNewGame(ArticleUtils.getRandomArticleId(), ArticleUtils.getRandomArticleId());
             }
         });
         replayTopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startNewGame();
+                startNewGame(ArticleUtils.getRandomArticleId(), ArticleUtils.getRandomArticleId());
             }
         });
 
@@ -103,18 +110,18 @@ public class PlayMode extends Activity {
         });
         
 
-        startNewGame();
+        startNewGame(ArticleUtils.getRandomArticleId(), ArticleUtils.getRandomArticleId());
     }
 
 
-    private void startNewGame() {
+    private void startNewGame(int destinationPageId, int startingPageId) {
         // Get a new random destination article. sets automatically
         destinationArticle.setPageid(ArticleUtils.getRandomArticleId());
-        tempDestUrl = "http://en.wikipedia.org/?curid=" + destinationArticle.getPageid();
+        tempDestUrl = "http://en.wikipedia.org/?curid=" + destinationPageId;
         utilityWebView.loadUrl(tempDestUrl);
 
         // Load a new starting point article
-        wikipediaWv.loadUrl("http://en.m.wikipedia.org/?curid=" + ArticleUtils.getRandomArticleId());
+        wikipediaWv.loadUrl("http://en.m.wikipedia.org/?curid=" + startingPageId);
 
         //Hide and show relevant views
         wikipediaWv.setVisibility(View.VISIBLE);

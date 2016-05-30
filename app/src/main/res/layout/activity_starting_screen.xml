@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     tools:context="com.example.tal.wikipediagame.StartingScreen"
-    android:background="@drawable/wikipedia_logo">
+    app:theme="@style/AppTheme.NoActionBar">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -18,7 +18,9 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            android:title="@string/app_name"
+            />
 
     </android.support.design.widget.AppBarLayout>
 
@@ -29,10 +31,10 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
         <Button
-            android:layout_width="256dp"
+            android:layout_width="312dp"
             android:layout_height="64dp"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="128dp"
+            android:layout_marginTop="160dp"
             android:text="@string/single_player_button"
             android:id="@+id/singlePlayerButton"
             android:onClick="startNewSinglePlayerGame"
@@ -40,7 +42,7 @@
         </Button>
 
         <Button
-            android:layout_width="256dp"
+            android:layout_width="312dp"
             android:layout_height="64dp"
             android:layout_centerHorizontal="true"
             android:layout_below="@id/singlePlayerButton"
@@ -49,16 +51,35 @@
             style="@style/AppTheme.ClassicButton">
         </Button>
 
+
         <Button
-            android:layout_width="256dp"
+            android:layout_width="312dp"
             android:layout_height="64dp"
             android:layout_centerHorizontal="true"
             android:layout_below="@id/multiplayerButton"
             android:id="@+id/randomOpponentButton"
             android:text="@string/random_opponent_button"
             style="@style/AppTheme.ClassicButton">
-        </Button
->
+        </Button>
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/wikipediaLogo"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="16dp"
+            android:src="@drawable/wikipedia_logo"/>
+
+        <ImageView
+            android:layout_width="81dp"
+            android:layout_height="81dp"
+            android:id="@+id/wikipediaBall"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="64dp"
+            android:layout_marginRight="5dp"
+            android:src="@drawable/wikipedia_ball"/>
 
     </RelativeLayout>
 
