@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">WikipediaGame</string>
+    <string name="title_activity_starting_screen">StartingScreen</string>
+    <string name="single_player_button">Single Player</string>
+    <string name="random_opponent_button">Random players</string>
+    <string name="multiplayer_button">Multiplayer</string>
 </resources>
