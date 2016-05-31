@@ -46,10 +46,4 @@ public class Article {
     public void setName(String name) {
         this.name = name;
     }
-
-    public void generateName() {
-
-
-        this.name = "Donland Trump";
-    }
 }

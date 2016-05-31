@@ -1,9 +1,16 @@
 package com.example.tal.wikipediagame;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -11,6 +18,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,15 +36,15 @@ public class PlayMode extends AppCompatActivity {
     private int pagesCount;
 
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play_mode);
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
-        setSupportActionBar(myToolbar);
 
+        final Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        assert myToolbar != null;
+        setSupportActionBar(myToolbar);
+        myToolbar.setTitle("");
 
         destinationArticle  = new Article();
 
@@ -64,11 +72,19 @@ public class PlayMode extends AppCompatActivity {
             @Override
             public void onLoadResource(WebView view, String url) {
                 super.onLoadResource(view, url);
-                if (!url.equals(tempDestUrl)) {
+                if (!url.equals(tempDestUrl) && !url.startsWith("https://en.wikipedia.org/w/load.php?")) {
                     destinationArticle.setUrl(view.getUrl());
-                    destinationArticle.generateName();
-                    String descriptionText = "Destination article title: " + destinationArticle.getName();
-                    destinationTextView.setText(descriptionText);
+                    String title = view.getTitle();
+                    if (title.contains("- Wikipedia")) {
+                        String articleName = title.substring(0, title.indexOf("- Wikipedia"));
+                        destinationArticle.setName(articleName);
+                        String descriptionText = "Destination article title: " + destinationArticle.getName();
+                        destinationTextView.setText(descriptionText);
+                        myToolbar.setTitle(Html.fromHtml(articleName));
+                    } else {
+                        Log.i("DEBUGGING", " Extracting title from destination page error. title: " + title + " url: " + url + " tempDestUrl: " + tempDestUrl);
+                    }
+
                 }
             }
         };
@@ -91,6 +107,7 @@ public class PlayMode extends AppCompatActivity {
 
         pagesCount = 0;
 
+
         wikipediaWv.setWebViewClient(new WebViewClient() {
             @Override
             public void onLoadResource(WebView view, String url) {
@@ -108,9 +125,31 @@ public class PlayMode extends AppCompatActivity {
                 }
             }
         });
-        
+
 
         startNewGame(ArticleUtils.getRandomArticleId(), ArticleUtils.getRandomArticleId());
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.exitToMainMenu:
+                Intent mainMenuIntent = new Intent(this, StartingScreen.class);
+                startActivity(mainMenuIntent);
+                return true;
+
+            case R.id.restartMatch:
+                // User chose the "Favorite" action, mark the current item
+                // as a favorite...
+                startNewGame(ArticleUtils.getRandomArticleId(), ArticleUtils.getRandomArticleId());
+                return true;
+
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+
+        }
     }
 
 
@@ -129,5 +168,12 @@ public class PlayMode extends AppCompatActivity {
         youWinTv.setVisibility(View.INVISIBLE);
 
         pagesCount = 0;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        return true;
     }
 }
