@@ -18,15 +18,11 @@
         android:title=""
         />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/destinationTextView" />
 
     <ImageButton
         android:layout_width="wrap_content"
         android:layout_height="?attr/actionBarSize"
-        android:src="@mipmap/replaybutton"
+        android:src="@drawable/goodjob"
         android:id="@+id/replayButton"
         android:layout_alignParentEnd="true"/>
 

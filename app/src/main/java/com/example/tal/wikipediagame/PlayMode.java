@@ -3,6 +3,7 @@ package com.example.tal.wikipediagame;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -25,26 +26,34 @@ import java.io.InputStream;
 
 public class PlayMode extends AppCompatActivity {
 
+    enum State {RANDOM_ARTICLE_EXPOSURE, IN_SEARCH_OF_DESTINATION}
     private Article destinationArticle;
     private WebView wikipediaWv;
-    private TextView destinationTextView;
     private TextView youWinTv;
     private String tempDestUrl;
     private Button playAgainButton;
-    private ImageButton replayTopButton;
-    private WebView utilityWebView;
+    private State state;
     private int pagesCount;
-
+    private CountDownTimer cdt;
+    public static final int SECONDS_TO_VIEW_DESTINATION = 10;
+    private final String WIKIPEDIA_PAGE_BY_PAGEID_URL_PREFIX = "http://en.m.wikipedia.org/?curid=";
+    private Toolbar myToolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play_mode);
 
-        final Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        /*
+        1. Generate destination article
+        2. Show it on the main screen for N seconds.
+        3. Change to random starting article, make title the destination article.
+         */
+
+        myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         assert myToolbar != null;
-        setSupportActionBar(myToolbar);
         myToolbar.setTitle("");
+        setSupportActionBar(myToolbar);
 
         destinationArticle  = new Article();
 
@@ -53,81 +62,79 @@ public class PlayMode extends AppCompatActivity {
         WebSettings webSettings = wikipediaWv.getSettings();
         webSettings.setJavaScriptEnabled(true);
 
-        destinationTextView = (TextView) findViewById(R.id.destinationTextView);
-        assert destinationTextView != null;
-
         youWinTv = (TextView) findViewById(R.id.youWinTv);
         assert youWinTv != null;
 
         playAgainButton = (Button) findViewById(R.id.playAgainButton);
         assert playAgainButton != null;
 
-        replayTopButton = (ImageButton) findViewById(R.id.replayButton);
-        assert replayTopButton != null;
-
-
-
-        utilityWebView = new WebView(getApplicationContext());
-        WebViewClient utilityWebViewClient = new WebViewClient() {
-            @Override
-            public void onLoadResource(WebView view, String url) {
-                super.onLoadResource(view, url);
-                if (!url.equals(tempDestUrl) && !url.startsWith("https://en.wikipedia.org/w/load.php?")) {
-                    destinationArticle.setUrl(view.getUrl());
-                    String title = view.getTitle();
-                    if (title.contains("- Wikipedia")) {
-                        String articleName = title.substring(0, title.indexOf("- Wikipedia"));
-                        destinationArticle.setName(articleName);
-                        String descriptionText = "Destination article title: " + destinationArticle.getName();
-                        destinationTextView.setText(descriptionText);
-                        myToolbar.setTitle(Html.fromHtml(articleName));
-                    } else {
-                        Log.i("DEBUGGING", " Extracting title from destination page error. title: " + title + " url: " + url + " tempDestUrl: " + tempDestUrl);
-                    }
-
-                }
-            }
-        };
-        utilityWebView.setWebViewClient(utilityWebViewClient);
-
 
         //Initialize and set the play again button
         playAgainButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startNewGame(ArticleUtils.getRandomArticleId(), ArticleUtils.getRandomArticleId());
+                startNewGame();
             }
         });
-        replayTopButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startNewGame(ArticleUtils.getRandomArticleId(), ArticleUtils.getRandomArticleId());
-            }
-        });
-
-        pagesCount = 0;
 
 
         wikipediaWv.setWebViewClient(new WebViewClient() {
             @Override
-            public void onLoadResource(WebView view, String url) {
-                super.onLoadResource(view, url);
-                if (url.equals(destinationArticle.getUrl())) {
-                    view.setVisibility(View.INVISIBLE);
-                    String victoryText = "You win! Great job! it only took you " + pagesCount + " moves!";
-                    youWinTv.setText(victoryText);
+            public void onPageFinished(WebView view, String url) {
+                if (state == State.RANDOM_ARTICLE_EXPOSURE) {
+                    extractRandomArticle(url, view);
+                    cdt.start();
+                } else if (state == State.IN_SEARCH_OF_DESTINATION) {
+                    if (view.getTitle().equals(destinationArticle.getTitle())) {
+                        view.setVisibility(View.INVISIBLE);
+                        String victoryText = "You win! Great job! it only took you " + pagesCount + " moves!";
+                        youWinTv.setText(victoryText);
 
-                    playAgainButton.setVisibility(View.VISIBLE);
+                        playAgainButton.setVisibility(View.VISIBLE);
 
-                    youWinTv.setVisibility(View.VISIBLE);
-                } else {
-                    pagesCount++;
+                        youWinTv.setVisibility(View.VISIBLE);
+                    } else {
+                        pagesCount++;
+                    }
                 }
             }
+
+
         });
 
 
-        startNewGame(ArticleUtils.getRandomArticleId(), ArticleUtils.getRandomArticleId());
+
+
+        cdt = new CountDownTimer(SECONDS_TO_VIEW_DESTINATION * 1000, 1000) {
+
+            @Override
+            public void onTick(long millisUntilFinished) {
+                myToolbar.setTitle(Math.round(millisUntilFinished / 1000.0) + " seconds left!");
+            }
+
+            @Override
+            public void onFinish() {
+                // Load a new starting point article
+                wikipediaWv.loadUrl(WIKIPEDIA_PAGE_BY_PAGEID_URL_PREFIX + ArticleUtils.getRandomArticleId());
+                myToolbar.setTitle(destinationArticle.getName());
+                pagesCount = 0;
+                state = State.IN_SEARCH_OF_DESTINATION;
+            }
+        };
+
+        startNewGame();
+    }
+
+    private void extractRandomArticle(String url, WebView view) {
+        destinationArticle.setUrl(view.getUrl());
+        String title = view.getTitle();
+        if (title.contains("- Wikipedia")) {
+            String articleName = title.substring(0, title.indexOf("- Wikipedia"));
+            destinationArticle.setName(articleName);
+            destinationArticle.setTitle(title);
+        } else {
+            Log.i("DEBUGGING", " Extracting title from destination page error. title: " + title + " url: " + url + " tempDestUrl: " + tempDestUrl);
+        }
     }
 
     @Override
@@ -141,7 +148,7 @@ public class PlayMode extends AppCompatActivity {
             case R.id.restartMatch:
                 // User chose the "Favorite" action, mark the current item
                 // as a favorite...
-                startNewGame(ArticleUtils.getRandomArticleId(), ArticleUtils.getRandomArticleId());
+                startNewGame();
                 return true;
 
             default:
@@ -152,15 +159,20 @@ public class PlayMode extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        // Prevent it from leaving the app.
+    }
 
-    private void startNewGame(int destinationPageId, int startingPageId) {
+    private void startNewGame() {
+        state = State.RANDOM_ARTICLE_EXPOSURE;
+        int destinationPageId = ArticleUtils.getRandomArticleId();
+        myToolbar.setTitle("");
+
         // Get a new random destination article. sets automatically
-        destinationArticle.setPageid(ArticleUtils.getRandomArticleId());
-        tempDestUrl = "http://en.wikipedia.org/?curid=" + destinationPageId;
-        utilityWebView.loadUrl(tempDestUrl);
-
-        // Load a new starting point article
-        wikipediaWv.loadUrl("http://en.m.wikipedia.org/?curid=" + startingPageId);
+        destinationArticle.setPageid(destinationPageId);
+        tempDestUrl = WIKIPEDIA_PAGE_BY_PAGEID_URL_PREFIX + destinationPageId;
+        wikipediaWv.loadUrl(tempDestUrl);
 
         //Hide and show relevant views
         wikipediaWv.setVisibility(View.VISIBLE);
