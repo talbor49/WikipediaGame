@@ -35,9 +35,10 @@ public class PlayMode extends AppCompatActivity {
     private State state;
     private int pagesCount;
     private CountDownTimer cdt;
-    public static final int SECONDS_TO_VIEW_DESTINATION = 10;
+    public static final int SECONDS_TO_VIEW_DESTINATION = 5;
     private final String WIKIPEDIA_PAGE_BY_PAGEID_URL_PREFIX = "http://en.m.wikipedia.org/?curid=";
     private Toolbar myToolbar;
+    private boolean loadedRandomArticle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +74,9 @@ public class PlayMode extends AppCompatActivity {
         playAgainButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startNewGame();
+                if (state == State.IN_SEARCH_OF_DESTINATION) {
+                    startNewGame();
+                }
             }
         });
 
@@ -81,7 +84,8 @@ public class PlayMode extends AppCompatActivity {
         wikipediaWv.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                if (state == State.RANDOM_ARTICLE_EXPOSURE) {
+                if (state == State.RANDOM_ARTICLE_EXPOSURE && !loadedRandomArticle) {
+                    loadedRandomArticle = true;
                     extractRandomArticle(url, view);
                     cdt.start();
                 } else if (state == State.IN_SEARCH_OF_DESTINATION) {
@@ -148,8 +152,13 @@ public class PlayMode extends AppCompatActivity {
             case R.id.restartMatch:
                 // User chose the "Favorite" action, mark the current item
                 // as a favorite...
-                startNewGame();
-                return true;
+                if (state == State.IN_SEARCH_OF_DESTINATION) {
+                    startNewGame();
+                    return true;
+                } else {
+                    return false;
+                }
+
 
             default:
                 // If we got here, the user's action was not recognized.
@@ -173,6 +182,7 @@ public class PlayMode extends AppCompatActivity {
         destinationArticle.setPageid(destinationPageId);
         tempDestUrl = WIKIPEDIA_PAGE_BY_PAGEID_URL_PREFIX + destinationPageId;
         wikipediaWv.loadUrl(tempDestUrl);
+        loadedRandomArticle = false;
 
         //Hide and show relevant views
         wikipediaWv.setVisibility(View.VISIBLE);
